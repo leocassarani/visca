@@ -28,15 +28,15 @@ impl Camera {
         Camera { iface }
     }
 
+    pub fn pan_tilt(&mut self) -> PanTilt {
+        PanTilt::new(&mut self.iface)
+    }
+
     pub fn power(&mut self) -> Power {
         Power::new(&mut self.iface)
     }
 
     pub fn zoom(&mut self) -> Zoom {
         Zoom::new(&mut self.iface)
-    }
-
-    pub fn pan_tilt(&mut self) -> PanTilt {
-        PanTilt::new(&mut self.iface)
     }
 }

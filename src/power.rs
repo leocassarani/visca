@@ -37,8 +37,8 @@ impl<'a> Power<'a> {
 
         self.iface.send_packet(&packet)?;
 
-        let mut buf = [0; 4];
-        self.iface.recv(&mut buf)?;
+        let packet = self.iface.recv_packet()?;
+        let buf = packet.as_bytes();
 
         let value = PowerValue::from_u8(buf[2]).expect("invalid power value");
         Ok(value)
@@ -53,11 +53,8 @@ impl<'a> Power<'a> {
 
         self.iface.send_packet(&packet)?;
 
-        let mut buf = [0; 3];
-        self.iface.recv(&mut buf)?;
-
-        let mut buf = [0; 3];
-        self.iface.recv(&mut buf)?;
+        self.iface.recv_packet()?;
+        self.iface.recv_packet()?;
 
         Ok(())
     }

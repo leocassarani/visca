@@ -6,9 +6,9 @@ use visca::{Camera, PanTiltValue};
 fn main() -> Result<()> {
     let mut camera = Camera::open("/dev/cu.usbserial-AM00QCCD")?;
 
-    let pt = PanTiltValue { pan: 180, tilt: 50 };
+    let pt = PanTiltValue { pan: 80, tilt: 50 };
     camera.pan_tilt().set(pt)?;
-    thread::sleep(Duration::from_secs(3));
+    thread::sleep(Duration::from_secs(2));
 
     let pan_tilt = camera.pan_tilt().get()?;
     println!("{:?}", pan_tilt);

@@ -1,6 +1,7 @@
-const PACKET_MIN_LEN: usize = 4;
 const PACKET_MAX_LEN: usize = 16;
+const PAYLOAD_MAX_LEN: usize = 12;
 
+#[derive(Debug)]
 pub struct Packet {
     bytes: [u8; PACKET_MAX_LEN],
     len: usize,
@@ -22,8 +23,18 @@ impl Packet {
     pub fn new() -> Self {
         Packet {
             bytes: [0; PACKET_MAX_LEN],
-            len: PACKET_MIN_LEN,
+            len: 0,
         }
+    }
+
+    pub fn from_slice(slice: &[u8]) -> Self {
+        let len = slice.len();
+        assert!(len <= PACKET_MAX_LEN);
+
+        let mut bytes = [0; PACKET_MAX_LEN];
+        bytes[..len].copy_from_slice(slice);
+
+        Packet { bytes, len }
     }
 
     pub fn address(mut self, addr: u8) -> Packet {
@@ -50,10 +61,10 @@ impl Packet {
 
     pub fn payload(mut self, payload: &[u8]) -> Packet {
         let len = payload.len();
-        assert!(len <= 12);
+        assert!(len <= PAYLOAD_MAX_LEN);
 
         self.bytes[3..3 + len].copy_from_slice(payload);
-        self.len = PACKET_MIN_LEN + len;
+        self.len = len + 4;
         self.bytes[self.len - 1] = 0xff;
 
         self

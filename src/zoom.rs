@@ -20,9 +20,8 @@ impl<'a> Zoom<'a> {
 
         self.iface.send_packet(&packet)?;
 
-        let mut buf = [0; 7];
-        self.iface.recv(&mut buf)?;
-        println!("{:#x?}", buf);
+        let res = self.iface.recv_packet()?;
+        let buf = res.as_bytes();
 
         let mut val = (buf[2] as u16) << 12;
         val |= (buf[3] as u16) << 8;
@@ -49,13 +48,8 @@ impl<'a> Zoom<'a> {
 
         self.iface.send_packet(&packet)?;
 
-        let mut buf = [0; 3];
-        self.iface.recv(&mut buf)?;
-        println!("{:#x?}", buf);
-
-        let mut buf = [0; 3];
-        self.iface.recv(&mut buf)?;
-        println!("{:#x?}", buf);
+        self.iface.recv_packet()?;
+        self.iface.recv_packet()?;
 
         Ok(())
     }

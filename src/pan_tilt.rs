@@ -20,8 +20,8 @@ impl<'a> PanTilt<'a> {
 
         self.iface.send_packet(&packet)?;
 
-        let mut buf = [0; 11];
-        self.iface.recv(&mut buf)?;
+        let packet = self.iface.recv_packet()?;
+        let buf = packet.as_bytes();
 
         let value = PanTiltValue::from_slice(&buf[2..10]);
         Ok(value)
@@ -40,11 +40,8 @@ impl<'a> PanTilt<'a> {
 
         self.iface.send_packet(&packet)?;
 
-        let mut buf = [0; 3];
-        self.iface.recv(&mut buf)?;
-
-        let mut buf = [0; 3];
-        self.iface.recv(&mut buf)?;
+        self.iface.recv_packet()?;
+        self.iface.recv_packet()?;
 
         Ok(())
     }
