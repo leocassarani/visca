@@ -1,9 +1,44 @@
 use crate::interface::Interface;
-use crate::packet::Packet;
-use std::io::Result;
+use crate::packet::Request;
+use std::io::{Error, ErrorKind, Result};
+
+pub struct Power<'a> {
+    iface: &'a mut Interface,
+}
+
+impl<'a> Power<'a> {
+    pub fn new(iface: &'a mut Interface) -> Self {
+        Power { iface }
+    }
+
+    pub fn get(&mut self) -> Result<PowerValue> {
+        let req = Request::new()
+            .address(1)
+            .inquiry()
+            .camera_1()
+            .payload(&[0x00]);
+
+        self.iface.send_request(&req)?;
+
+        let packet = self.iface.recv_reply()?;
+        let byte = packet.payload()[0];
+
+        PowerValue::from_u8(byte).ok_or_else(|| Error::new(ErrorKind::Other, "invalid power value"))
+    }
+
+    pub fn set(&mut self, value: PowerValue) -> Result<()> {
+        let req = Request::new()
+            .address(1)
+            .command()
+            .camera_1()
+            .payload(&[0x00, value as u8]);
+
+        self.iface.send_request_with_reply(&req)
+    }
+}
 
 #[repr(u8)]
-#[derive(Debug)]
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
 pub enum PowerValue {
     On = 0x02,
     Off = 0x03,
@@ -16,41 +51,5 @@ impl PowerValue {
             0x03 => Some(PowerValue::Off),
             _ => None,
         }
-    }
-}
-
-pub struct Power<'a> {
-    iface: &'a mut Interface,
-}
-
-impl<'a> Power<'a> {
-    pub fn new(iface: &'a mut Interface) -> Self {
-        Power { iface }
-    }
-
-    pub fn get(&mut self) -> Result<PowerValue> {
-        let packet = Packet::new()
-            .address(1)
-            .inquiry()
-            .camera_1()
-            .payload(&[0x00]);
-
-        self.iface.send_packet(&packet)?;
-
-        let packet = self.iface.recv_packet()?;
-        let buf = packet.as_bytes();
-
-        let value = PowerValue::from_u8(buf[2]).expect("invalid power value");
-        Ok(value)
-    }
-
-    pub fn set(&mut self, value: PowerValue) -> Result<()> {
-        let packet = Packet::new()
-            .address(1)
-            .command()
-            .camera_1()
-            .payload(&[0x00, value as u8]);
-
-        self.iface.send_packet_with_reply(&packet)
     }
 }

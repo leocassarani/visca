@@ -1,5 +1,5 @@
 use crate::interface::Interface;
-use crate::packet::Packet;
+use crate::packet::Request;
 use std::io::Result;
 
 pub struct Zoom<'a> {
@@ -12,21 +12,21 @@ impl<'a> Zoom<'a> {
     }
 
     pub fn get(&mut self) -> Result<u16> {
-        let packet = Packet::new()
+        let req = Request::new()
             .address(1)
             .inquiry()
             .camera_1()
             .payload(&[0x47]);
 
-        self.iface.send_packet(&packet)?;
+        self.iface.send_request(&req)?;
 
-        let res = self.iface.recv_packet()?;
-        let buf = res.as_bytes();
+        let res = self.iface.recv_reply()?;
+        let payload = res.payload();
 
-        let mut val = (buf[2] as u16) << 12;
-        val |= (buf[3] as u16) << 8;
-        val |= (buf[4] as u16) << 4;
-        val |= buf[5] as u16;
+        let mut val = (payload[0] as u16) << 12;
+        val |= (payload[1] as u16) << 8;
+        val |= (payload[2] as u16) << 4;
+        val |= payload[3] as u16;
 
         Ok(val)
     }
@@ -40,12 +40,12 @@ impl<'a> Zoom<'a> {
             (val & 0x000f) as u8,
         ];
 
-        let packet = Packet::new()
+        let req = Request::new()
             .address(1)
             .command()
             .camera_1()
             .payload(payload);
 
-        self.iface.send_packet_with_reply(&packet)
+        self.iface.send_request_with_reply(&req)
     }
 }

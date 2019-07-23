@@ -1,4 +1,4 @@
-use crate::packet::{Message, Packet, Reply};
+use crate::packet::{Message, Reply, Request};
 use serialport::prelude::*;
 use std::io::{Error, ErrorKind, Result};
 use std::path::Path;
@@ -33,29 +33,30 @@ impl Interface {
         }
     }
 
-    pub fn send_packet_with_reply(&mut self, packet: &Packet) -> Result<()> {
-        self.send_packet(packet)?;
+    pub fn send_request_with_reply(&mut self, req: &Request) -> Result<()> {
+        self.send_request(req)?;
 
-        match self.recv_packet()?.message() {
+        match self.recv_reply()?.message() {
             Message::Ack => {} // all good
-            Message::Error(_) => {
+            Message::Error(err) => {
+                dbg!(err);
                 return Err(Error::new(ErrorKind::Other, "got error"));
             }
             _ => return Err(Error::new(ErrorKind::Other, "expected ack")),
         }
 
-        match self.recv_packet()?.message() {
+        match self.recv_reply()?.message() {
             Message::Completion(_) => Ok(()),
             Message::Error(_) => Err(Error::new(ErrorKind::Other, "got error")),
             _ => Err(Error::new(ErrorKind::Other, "expected reply")),
         }
     }
 
-    pub fn send_packet(&mut self, packet: &Packet) -> Result<()> {
-        self.port.write_all(packet.as_bytes())
+    pub fn send_request(&mut self, req: &Request) -> Result<()> {
+        self.port.write_all(req.as_bytes())
     }
 
-    pub fn recv_packet(&mut self) -> Result<Reply> {
+    pub fn recv_reply(&mut self) -> Result<Reply> {
         if let Some(reply) = self.extract_reply() {
             return Ok(reply);
         }
@@ -80,7 +81,7 @@ impl Interface {
     fn extract_reply(&mut self) -> Option<Reply> {
         memchr::memchr(0xff, &self.rbuf[..self.rlen]).map(|pos| {
             let end = pos + 1;
-            let packet = Reply::from_bytes(&self.rbuf[..end]);
+            let packet = Reply::parse(&self.rbuf[..end]);
             self.rlen -= end;
 
             if self.rlen > 0 {
