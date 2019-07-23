@@ -1,9 +1,8 @@
+use crate::packet::Packet;
 use serialport::prelude::*;
-use std::io::{ErrorKind, Result};
+use std::io::{Error, ErrorKind, Result};
 use std::path::Path;
 use std::time::Duration;
-
-use crate::packet::Packet;
 
 pub struct Interface {
     port: Box<dyn SerialPort>,
@@ -39,16 +38,7 @@ impl Interface {
     }
 
     pub fn recv_packet(&mut self) -> Result<Packet> {
-        if let Some(pos) = memchr::memchr(0xff, &self.rbuf[..self.rlen]) {
-            let end = pos + 1;
-            let packet = Packet::from_slice(&self.rbuf[..end]);
-            self.rlen -= end;
-
-            if self.rlen > 0 {
-                let unread = &self.rbuf[end..end + self.rlen].to_vec();
-                self.rbuf[..self.rlen].copy_from_slice(unread);
-            }
-
+        if let Some(packet) = self.extract_packet() {
             return Ok(packet);
         }
 
@@ -57,22 +47,34 @@ impl Interface {
                 Ok(n) => {
                     self.rlen += n;
 
-                    if let Some(pos) = memchr::memchr(0xff, &self.rbuf[..self.rlen]) {
-                        let end = pos + 1;
-                        let packet = Packet::from_slice(&self.rbuf[..end]);
-                        self.rlen -= end;
-
-                        if self.rlen > 0 {
-                            let unread = &self.rbuf[end..end + self.rlen].to_vec();
-                            self.rbuf[..self.rlen].copy_from_slice(unread);
-                        }
-
+                    if let Some(packet) = self.extract_packet() {
                         return Ok(packet);
-                    };
+                    } else if self.rbuf_full() {
+                        return Err(Error::new(ErrorKind::Other, "full buffer"));
+                    }
                 }
                 Err(ref e) if e.kind() == ErrorKind::Interrupted => continue,
                 Err(err) => return Err(err),
             }
         }
+    }
+
+    fn extract_packet(&mut self) -> Option<Packet> {
+        memchr::memchr(0xff, &self.rbuf[..self.rlen]).map(|pos| {
+            let end = pos + 1;
+            let packet = Packet::from_slice(&self.rbuf[..end]);
+            self.rlen -= end;
+
+            if self.rlen > 0 {
+                let unread = self.rbuf[end..end + self.rlen].to_vec();
+                self.rbuf[..self.rlen].copy_from_slice(&unread);
+            }
+
+            packet
+        })
+    }
+
+    fn rbuf_full(&self) -> bool {
+        self.rlen == self.rbuf.len()
     }
 }

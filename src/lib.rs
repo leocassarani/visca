@@ -21,7 +21,8 @@ pub struct Camera {
 
 impl Camera {
     pub fn open<P: AsRef<Path>>(path: P) -> Result<Self> {
-        Interface::open(path).map(Camera::new)
+        let iface = Interface::open(path)?;
+        Ok(Camera::new(iface))
     }
 
     fn new(iface: Interface) -> Self {
