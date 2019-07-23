@@ -45,6 +45,141 @@ impl<'a> PanTilt<'a> {
 
         Ok(())
     }
+
+    pub fn up(&mut self) -> Result<()> {
+        let packet = Packet::new()
+            .address(1)
+            .command()
+            .pan_tilter()
+            .payload(&[0x01, 0x01, 0x01, 0x03, 0x01]);
+
+        self.iface.send_packet(&packet)?;
+
+        self.iface.recv_packet()?;
+        self.iface.recv_packet()?;
+
+        Ok(())
+    }
+
+    pub fn down(&mut self) -> Result<()> {
+        let packet = Packet::new()
+            .address(1)
+            .command()
+            .pan_tilter()
+            .payload(&[0x01, 0x01, 0x01, 0x03, 0x02]);
+
+        self.iface.send_packet(&packet)?;
+
+        self.iface.recv_packet()?;
+        self.iface.recv_packet()?;
+
+        Ok(())
+    }
+
+    pub fn left(&mut self) -> Result<()> {
+        let packet = Packet::new()
+            .address(1)
+            .command()
+            .pan_tilter()
+            .payload(&[0x01, 0x01, 0x01, 0x01, 0x03]);
+
+        self.iface.send_packet(&packet)?;
+
+        self.iface.recv_packet()?;
+        self.iface.recv_packet()?;
+
+        Ok(())
+    }
+
+    pub fn right(&mut self) -> Result<()> {
+        let packet = Packet::new()
+            .address(1)
+            .command()
+            .pan_tilter()
+            .payload(&[0x01, 0x01, 0x01, 0x02, 0x03]);
+
+        self.iface.send_packet(&packet)?;
+
+        self.iface.recv_packet()?;
+        self.iface.recv_packet()?;
+
+        Ok(())
+    }
+
+    pub fn up_left(&mut self) -> Result<()> {
+        let packet = Packet::new()
+            .address(1)
+            .command()
+            .pan_tilter()
+            .payload(&[0x01, 0x01, 0x01, 0x01, 0x01]);
+
+        self.iface.send_packet(&packet)?;
+
+        self.iface.recv_packet()?;
+        self.iface.recv_packet()?;
+
+        Ok(())
+    }
+
+    pub fn up_right(&mut self) -> Result<()> {
+        let packet = Packet::new()
+            .address(1)
+            .command()
+            .pan_tilter()
+            .payload(&[0x01, 0x01, 0x01, 0x02, 0x01]);
+
+        self.iface.send_packet(&packet)?;
+
+        self.iface.recv_packet()?;
+        self.iface.recv_packet()?;
+
+        Ok(())
+    }
+
+    pub fn down_left(&mut self) -> Result<()> {
+        let packet = Packet::new()
+            .address(1)
+            .command()
+            .pan_tilter()
+            .payload(&[0x01, 0x01, 0x01, 0x01, 0x02]);
+
+        self.iface.send_packet(&packet)?;
+
+        self.iface.recv_packet()?;
+        self.iface.recv_packet()?;
+
+        Ok(())
+    }
+
+    pub fn down_right(&mut self) -> Result<()> {
+        let packet = Packet::new()
+            .address(1)
+            .command()
+            .pan_tilter()
+            .payload(&[0x01, 0x01, 0x01, 0x02, 0x02]);
+
+        self.iface.send_packet(&packet)?;
+
+        self.iface.recv_packet()?;
+        self.iface.recv_packet()?;
+
+        Ok(())
+    }
+
+    pub fn stop(&mut self) -> Result<()> {
+        let packet = Packet::new()
+            .address(1)
+            .command()
+            .pan_tilter()
+            .payload(&[0x01, 0x01, 0x01, 0x03, 0x03]);
+
+        self.iface.send_packet(&packet)?;
+
+        self.iface.recv_packet()?;
+        self.iface.recv_packet()?;
+
+        Ok(())
+    }
 }
 
 #[derive(Clone, Copy, Debug)]
