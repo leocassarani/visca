@@ -46,11 +46,6 @@ impl<'a> Zoom<'a> {
             .camera_1()
             .payload(payload);
 
-        self.iface.send_packet(&packet)?;
-
-        self.iface.recv_packet()?;
-        self.iface.recv_packet()?;
-
-        Ok(())
+        self.iface.send_packet_with_reply(&packet)
     }
 }

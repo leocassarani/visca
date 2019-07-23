@@ -1,4 +1,4 @@
-use crate::packet::Packet;
+use crate::packet::{Message, Packet, Reply};
 use serialport::prelude::*;
 use std::io::{Error, ErrorKind, Result};
 use std::path::Path;
@@ -33,13 +33,31 @@ impl Interface {
         }
     }
 
+    pub fn send_packet_with_reply(&mut self, packet: &Packet) -> Result<()> {
+        self.send_packet(packet)?;
+
+        match self.recv_packet()?.message() {
+            Message::Ack => {} // all good
+            Message::Error(_) => {
+                return Err(Error::new(ErrorKind::Other, "got error"));
+            }
+            _ => return Err(Error::new(ErrorKind::Other, "expected ack")),
+        }
+
+        match self.recv_packet()?.message() {
+            Message::Completion(_) => Ok(()),
+            Message::Error(_) => Err(Error::new(ErrorKind::Other, "got error")),
+            _ => Err(Error::new(ErrorKind::Other, "expected reply")),
+        }
+    }
+
     pub fn send_packet(&mut self, packet: &Packet) -> Result<()> {
         self.port.write_all(packet.as_bytes())
     }
 
-    pub fn recv_packet(&mut self) -> Result<Packet> {
-        if let Some(packet) = self.extract_packet() {
-            return Ok(packet);
+    pub fn recv_packet(&mut self) -> Result<Reply> {
+        if let Some(reply) = self.extract_reply() {
+            return Ok(reply);
         }
 
         loop {
@@ -47,8 +65,8 @@ impl Interface {
                 Ok(n) => {
                     self.rlen += n;
 
-                    if let Some(packet) = self.extract_packet() {
-                        return Ok(packet);
+                    if let Some(reply) = self.extract_reply() {
+                        return Ok(reply);
                     } else if self.rbuf_full() {
                         return Err(Error::new(ErrorKind::Other, "full buffer"));
                     }
@@ -59,10 +77,10 @@ impl Interface {
         }
     }
 
-    fn extract_packet(&mut self) -> Option<Packet> {
+    fn extract_reply(&mut self) -> Option<Reply> {
         memchr::memchr(0xff, &self.rbuf[..self.rlen]).map(|pos| {
             let end = pos + 1;
-            let packet = Packet::from_slice(&self.rbuf[..end]);
+            let packet = Reply::from_bytes(&self.rbuf[..end]);
             self.rlen -= end;
 
             if self.rlen > 0 {

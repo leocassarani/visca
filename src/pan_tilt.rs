@@ -38,12 +38,7 @@ impl<'a> PanTilt<'a> {
             .pan_tilter()
             .payload(&payload);
 
-        self.iface.send_packet(&packet)?;
-
-        self.iface.recv_packet()?;
-        self.iface.recv_packet()?;
-
-        Ok(())
+        self.iface.send_packet_with_reply(&packet)
     }
 
     pub fn up(&mut self) -> Result<()> {
@@ -53,12 +48,7 @@ impl<'a> PanTilt<'a> {
             .pan_tilter()
             .payload(&[0x01, 0x01, 0x01, 0x03, 0x01]);
 
-        self.iface.send_packet(&packet)?;
-
-        self.iface.recv_packet()?;
-        self.iface.recv_packet()?;
-
-        Ok(())
+        self.iface.send_packet_with_reply(&packet)
     }
 
     pub fn down(&mut self) -> Result<()> {
@@ -68,12 +58,7 @@ impl<'a> PanTilt<'a> {
             .pan_tilter()
             .payload(&[0x01, 0x01, 0x01, 0x03, 0x02]);
 
-        self.iface.send_packet(&packet)?;
-
-        self.iface.recv_packet()?;
-        self.iface.recv_packet()?;
-
-        Ok(())
+        self.iface.send_packet_with_reply(&packet)
     }
 
     pub fn left(&mut self) -> Result<()> {
@@ -83,12 +68,7 @@ impl<'a> PanTilt<'a> {
             .pan_tilter()
             .payload(&[0x01, 0x01, 0x01, 0x01, 0x03]);
 
-        self.iface.send_packet(&packet)?;
-
-        self.iface.recv_packet()?;
-        self.iface.recv_packet()?;
-
-        Ok(())
+        self.iface.send_packet_with_reply(&packet)
     }
 
     pub fn right(&mut self) -> Result<()> {
@@ -98,12 +78,7 @@ impl<'a> PanTilt<'a> {
             .pan_tilter()
             .payload(&[0x01, 0x01, 0x01, 0x02, 0x03]);
 
-        self.iface.send_packet(&packet)?;
-
-        self.iface.recv_packet()?;
-        self.iface.recv_packet()?;
-
-        Ok(())
+        self.iface.send_packet_with_reply(&packet)
     }
 
     pub fn up_left(&mut self) -> Result<()> {
@@ -113,12 +88,7 @@ impl<'a> PanTilt<'a> {
             .pan_tilter()
             .payload(&[0x01, 0x01, 0x01, 0x01, 0x01]);
 
-        self.iface.send_packet(&packet)?;
-
-        self.iface.recv_packet()?;
-        self.iface.recv_packet()?;
-
-        Ok(())
+        self.iface.send_packet_with_reply(&packet)
     }
 
     pub fn up_right(&mut self) -> Result<()> {
@@ -128,12 +98,7 @@ impl<'a> PanTilt<'a> {
             .pan_tilter()
             .payload(&[0x01, 0x01, 0x01, 0x02, 0x01]);
 
-        self.iface.send_packet(&packet)?;
-
-        self.iface.recv_packet()?;
-        self.iface.recv_packet()?;
-
-        Ok(())
+        self.iface.send_packet_with_reply(&packet)
     }
 
     pub fn down_left(&mut self) -> Result<()> {
@@ -143,12 +108,7 @@ impl<'a> PanTilt<'a> {
             .pan_tilter()
             .payload(&[0x01, 0x01, 0x01, 0x01, 0x02]);
 
-        self.iface.send_packet(&packet)?;
-
-        self.iface.recv_packet()?;
-        self.iface.recv_packet()?;
-
-        Ok(())
+        self.iface.send_packet_with_reply(&packet)
     }
 
     pub fn down_right(&mut self) -> Result<()> {
@@ -158,12 +118,7 @@ impl<'a> PanTilt<'a> {
             .pan_tilter()
             .payload(&[0x01, 0x01, 0x01, 0x02, 0x02]);
 
-        self.iface.send_packet(&packet)?;
-
-        self.iface.recv_packet()?;
-        self.iface.recv_packet()?;
-
-        Ok(())
+        self.iface.send_packet_with_reply(&packet)
     }
 
     pub fn stop(&mut self) -> Result<()> {
@@ -173,12 +128,7 @@ impl<'a> PanTilt<'a> {
             .pan_tilter()
             .payload(&[0x01, 0x01, 0x01, 0x03, 0x03]);
 
-        self.iface.send_packet(&packet)?;
-
-        self.iface.recv_packet()?;
-        self.iface.recv_packet()?;
-
-        Ok(())
+        self.iface.send_packet_with_reply(&packet)
     }
 }
 

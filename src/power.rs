@@ -51,11 +51,6 @@ impl<'a> Power<'a> {
             .camera_1()
             .payload(&[0x00, value as u8]);
 
-        self.iface.send_packet(&packet)?;
-
-        self.iface.recv_packet()?;
-        self.iface.recv_packet()?;
-
-        Ok(())
+        self.iface.send_packet_with_reply(&packet)
     }
 }
