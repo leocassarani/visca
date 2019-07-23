@@ -182,7 +182,7 @@ impl<'a> PanTilt<'a> {
     }
 }
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct PanTiltValue {
     pub pan: i16,
     pub tilt: i16,
