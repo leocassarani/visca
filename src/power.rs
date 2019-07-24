@@ -1,5 +1,5 @@
 use crate::interface::Interface;
-use crate::packet::Request;
+use crate::packet::{Message, Request};
 use std::io::{Error, ErrorKind, Result};
 
 pub struct Power<'a> {
@@ -18,12 +18,13 @@ impl<'a> Power<'a> {
             .camera_1()
             .payload(&[0x00]);
 
-        self.iface.send_request(&req)?;
-
-        let packet = self.iface.recv_reply()?;
-        let byte = packet.payload()[0];
-
-        PowerValue::from_u8(byte).ok_or_else(|| Error::new(ErrorKind::Other, "invalid power value"))
+        self.iface
+            .send_request_with_reply(&req)
+            .and_then(|reply| match reply.message() {
+                Message::Completion(&[byte]) => PowerValue::from_u8(byte)
+                    .ok_or(Error::new(ErrorKind::Other, "invalid power value")),
+                _ => Err(Error::new(ErrorKind::Other, "unexpected message")),
+            })
     }
 
     pub fn set(&mut self, value: PowerValue) -> Result<()> {
@@ -33,7 +34,12 @@ impl<'a> Power<'a> {
             .camera_1()
             .payload(&[0x00, value as u8]);
 
-        self.iface.send_request_with_reply(&req)
+        self.iface
+            .send_request_with_reply(&req)
+            .and_then(|reply| match reply.message() {
+                Message::Completion(&[]) => Ok(()),
+                _ => Err(Error::new(ErrorKind::Other, "expected an empty reply")),
+            })
     }
 }
 

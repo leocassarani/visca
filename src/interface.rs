@@ -33,23 +33,18 @@ impl Interface {
         }
     }
 
-    pub fn send_request_with_reply(&mut self, req: &Request) -> Result<()> {
+    pub fn send_request_with_reply(&mut self, req: &Request) -> Result<Reply> {
         self.send_request(req)?;
 
-        match self.recv_reply()?.message() {
-            Message::Ack => {} // all good
-            Message::Error(err) => {
-                dbg!(err);
-                return Err(Error::new(ErrorKind::Other, "got error"));
-            }
-            _ => return Err(Error::new(ErrorKind::Other, "expected ack")),
-        }
-
-        match self.recv_reply()?.message() {
-            Message::Completion(_) => Ok(()),
+        self.recv_reply().and_then(|reply| match reply.message() {
+            Message::Ack => self.recv_reply().and_then(|reply| match reply.message() {
+                Message::Completion(_) => Ok(reply),
+                Message::Error(_) => Err(Error::new(ErrorKind::Other, "got error")),
+                _ => Err(Error::new(ErrorKind::Other, "unexpected message")),
+            }),
+            Message::Completion(_) => Ok(reply),
             Message::Error(_) => Err(Error::new(ErrorKind::Other, "got error")),
-            _ => Err(Error::new(ErrorKind::Other, "expected reply")),
-        }
+        })
     }
 
     pub fn send_request(&mut self, req: &Request) -> Result<()> {

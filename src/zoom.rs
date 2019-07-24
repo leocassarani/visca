@@ -1,6 +1,6 @@
 use crate::interface::Interface;
-use crate::packet::Request;
-use std::io::Result;
+use crate::packet::{Message, Request};
+use std::io::{Error, ErrorKind, Result};
 
 pub struct Zoom<'a> {
     iface: &'a mut Interface,
@@ -18,17 +18,18 @@ impl<'a> Zoom<'a> {
             .camera_1()
             .payload(&[0x47]);
 
-        self.iface.send_request(&req)?;
-
-        let res = self.iface.recv_reply()?;
-        let payload = res.payload();
-
-        let mut val = (payload[0] as u16) << 12;
-        val |= (payload[1] as u16) << 8;
-        val |= (payload[2] as u16) << 4;
-        val |= payload[3] as u16;
-
-        Ok(val)
+        self.iface
+            .send_request_with_reply(&req)
+            .and_then(|reply| match reply.message() {
+                Message::Completion(payload) if payload.len() == 4 => {
+                    let mut val = (payload[0] as u16) << 12;
+                    val |= (payload[1] as u16) << 8;
+                    val |= (payload[2] as u16) << 4;
+                    val |= payload[3] as u16;
+                    Ok(val)
+                }
+                _ => Err(Error::new(ErrorKind::Other, "unexpected message")),
+            })
     }
 
     pub fn set(&mut self, val: u16) -> Result<()> {
@@ -46,6 +47,11 @@ impl<'a> Zoom<'a> {
             .camera_1()
             .payload(payload);
 
-        self.iface.send_request_with_reply(&req)
+        self.iface
+            .send_request_with_reply(&req)
+            .and_then(|reply| match reply.message() {
+                Message::Completion(&[]) => Ok(()),
+                _ => Err(Error::new(ErrorKind::Other, "expected an empty reply")),
+            })
     }
 }
