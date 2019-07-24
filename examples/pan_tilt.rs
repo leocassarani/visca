@@ -7,7 +7,7 @@ fn main() -> Result<()> {
     let mut camera = Camera::open("/dev/cu.usbserial-AM00QCCD")?;
 
     let pt = PanTiltValue { pan: 80, tilt: 50 };
-    camera.pan_tilt().set(pt)?;
+    camera.pan_tilt().set_absolute(pt)?;
     thread::sleep(Duration::from_secs(2));
 
     let pan_tilt = camera.pan_tilt().get()?;

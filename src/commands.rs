@@ -35,9 +35,25 @@ impl<'a> PanTilt<'a> {
             })
     }
 
-    pub fn set(&mut self, val: PanTiltValue) -> Result<()> {
+    pub fn set_absolute(&mut self, val: PanTiltValue) -> Result<()> {
         let mut payload = [0; 11];
         payload[..2].copy_from_slice(&[0x02, 0x01]);
+        payload[3..].copy_from_slice(&val.to_bytes());
+
+        let req = Request::new()
+            .address(1)
+            .command()
+            .pan_tilter()
+            .payload(&payload);
+
+        self.iface
+            .send_request_with_reply(&req)
+            .and_then(check_empty_reply)
+    }
+
+    pub fn set_relative(&mut self, val: PanTiltValue) -> Result<()> {
+        let mut payload = [0; 11];
+        payload[..2].copy_from_slice(&[0x03, 0x01]);
         payload[3..].copy_from_slice(&val.to_bytes());
 
         let req = Request::new()
