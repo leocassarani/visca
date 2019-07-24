@@ -237,8 +237,7 @@ impl<'a> Power<'a> {
         self.iface
             .send_request_with_reply(&req)
             .and_then(|reply| match reply.message() {
-                Message::Completion(&[byte]) => PowerValue::from_u8(byte)
-                    .ok_or(Error::new(ErrorKind::Other, "invalid power value")),
+                Message::Completion(&[byte]) => Ok(PowerValue::from_u8(byte)),
                 _ => Err(Error::new(ErrorKind::Other, "unexpected message")),
             })
     }
@@ -261,14 +260,15 @@ impl<'a> Power<'a> {
 pub enum PowerValue {
     On = 0x02,
     Off = 0x03,
+    Unknown,
 }
 
 impl PowerValue {
-    fn from_u8(b: u8) -> Option<Self> {
+    fn from_u8(b: u8) -> Self {
         match b {
-            0x02 => Some(PowerValue::On),
-            0x03 => Some(PowerValue::Off),
-            _ => None,
+            0x02 => PowerValue::On,
+            0x03 => PowerValue::Off,
+            _ => PowerValue::Unknown,
         }
     }
 }
@@ -297,6 +297,7 @@ impl<'a> Zoom<'a> {
                     val |= (payload[1] as u16) << 8;
                     val |= (payload[2] as u16) << 4;
                     val |= payload[3] as u16;
+
                     Ok(val)
                 }
                 _ => Err(Error::new(ErrorKind::Other, "unexpected message")),
