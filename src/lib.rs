@@ -5,7 +5,7 @@ mod commands;
 mod interface;
 mod packet;
 
-use commands::{PanTilt, Power, Zoom};
+use commands::{PanTilt, Power, Presets, Zoom};
 use interface::Interface;
 
 pub use commands::{PanTiltValue, PowerValue};
@@ -30,6 +30,10 @@ impl Camera {
 
     pub fn power(&mut self) -> Power {
         Power::new(&mut self.iface)
+    }
+
+    pub fn presets(&mut self) -> Presets {
+        Presets::new(&mut self.iface)
     }
 
     pub fn zoom(&mut self) -> Zoom {

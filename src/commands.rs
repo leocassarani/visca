@@ -273,6 +273,52 @@ impl PowerValue {
     }
 }
 
+pub struct Presets<'a> {
+    iface: &'a mut Interface,
+}
+
+impl<'a> Presets<'a> {
+    pub fn new(iface: &'a mut Interface) -> Self {
+        Presets { iface }
+    }
+
+    pub fn reset(&mut self, num: u8) -> Result<()> {
+        let req = Request::new()
+            .address(1)
+            .command()
+            .camera_1()
+            .payload(&[0x3f, 0x00, num & 0x0f]);
+
+        self.iface
+            .send_request_with_reply(&req)
+            .and_then(check_empty_reply)
+    }
+
+    pub fn set(&mut self, num: u8) -> Result<()> {
+        let req = Request::new()
+            .address(1)
+            .command()
+            .camera_1()
+            .payload(&[0x3f, 0x01, num & 0x0f]);
+
+        self.iface
+            .send_request_with_reply(&req)
+            .and_then(check_empty_reply)
+    }
+
+    pub fn recall(&mut self, num: u8) -> Result<()> {
+        let req = Request::new()
+            .address(1)
+            .command()
+            .camera_1()
+            .payload(&[0x3f, 0x02, num & 0x0f]);
+
+        self.iface
+            .send_request_with_reply(&req)
+            .and_then(check_empty_reply)
+    }
+}
+
 pub struct Zoom<'a> {
     iface: &'a mut Interface,
 }
