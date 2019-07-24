@@ -2,6 +2,13 @@ use crate::interface::Interface;
 use crate::packet::{Message, Reply, Request};
 use std::io::{Error, ErrorKind, Result};
 
+fn check_empty_reply(reply: Reply) -> Result<()> {
+    match reply.message() {
+        Message::Completion(&[]) => Ok(()),
+        _ => Err(Error::new(ErrorKind::Other, "expected an empty reply")),
+    }
+}
+
 pub struct PanTilt<'a> {
     iface: &'a mut Interface,
 }
@@ -41,7 +48,7 @@ impl<'a> PanTilt<'a> {
 
         self.iface
             .send_request_with_reply(&req)
-            .and_then(empty_reply)
+            .and_then(check_empty_reply)
     }
 
     pub fn up(&mut self) -> Result<()> {
@@ -53,7 +60,7 @@ impl<'a> PanTilt<'a> {
 
         self.iface
             .send_request_with_reply(&req)
-            .and_then(empty_reply)
+            .and_then(check_empty_reply)
     }
 
     pub fn down(&mut self) -> Result<()> {
@@ -65,7 +72,7 @@ impl<'a> PanTilt<'a> {
 
         self.iface
             .send_request_with_reply(&req)
-            .and_then(empty_reply)
+            .and_then(check_empty_reply)
     }
 
     pub fn left(&mut self) -> Result<()> {
@@ -77,7 +84,7 @@ impl<'a> PanTilt<'a> {
 
         self.iface
             .send_request_with_reply(&req)
-            .and_then(empty_reply)
+            .and_then(check_empty_reply)
     }
 
     pub fn right(&mut self) -> Result<()> {
@@ -89,7 +96,7 @@ impl<'a> PanTilt<'a> {
 
         self.iface
             .send_request_with_reply(&req)
-            .and_then(empty_reply)
+            .and_then(check_empty_reply)
     }
 
     pub fn up_left(&mut self) -> Result<()> {
@@ -101,7 +108,7 @@ impl<'a> PanTilt<'a> {
 
         self.iface
             .send_request_with_reply(&req)
-            .and_then(empty_reply)
+            .and_then(check_empty_reply)
     }
 
     pub fn up_right(&mut self) -> Result<()> {
@@ -113,7 +120,7 @@ impl<'a> PanTilt<'a> {
 
         self.iface
             .send_request_with_reply(&req)
-            .and_then(empty_reply)
+            .and_then(check_empty_reply)
     }
 
     pub fn down_left(&mut self) -> Result<()> {
@@ -125,7 +132,7 @@ impl<'a> PanTilt<'a> {
 
         self.iface
             .send_request_with_reply(&req)
-            .and_then(empty_reply)
+            .and_then(check_empty_reply)
     }
 
     pub fn down_right(&mut self) -> Result<()> {
@@ -137,7 +144,7 @@ impl<'a> PanTilt<'a> {
 
         self.iface
             .send_request_with_reply(&req)
-            .and_then(empty_reply)
+            .and_then(check_empty_reply)
     }
 
     pub fn stop(&mut self) -> Result<()> {
@@ -149,14 +156,7 @@ impl<'a> PanTilt<'a> {
 
         self.iface
             .send_request_with_reply(&req)
-            .and_then(empty_reply)
-    }
-}
-
-fn empty_reply(reply: Reply) -> Result<()> {
-    match reply.message() {
-        Message::Completion(&[]) => Ok(()),
-        _ => Err(Error::new(ErrorKind::Other, "expected an empty reply")),
+            .and_then(check_empty_reply)
     }
 }
 
@@ -199,5 +199,111 @@ impl PanTiltValue {
             ((tilt & 0x00f0) >> 4) as u8,
             (tilt & 0x000f) as u8,
         ]
+    }
+}
+
+pub struct Power<'a> {
+    iface: &'a mut Interface,
+}
+
+impl<'a> Power<'a> {
+    pub fn new(iface: &'a mut Interface) -> Self {
+        Power { iface }
+    }
+
+    pub fn get(&mut self) -> Result<PowerValue> {
+        let req = Request::new()
+            .address(1)
+            .inquiry()
+            .camera_1()
+            .payload(&[0x00]);
+
+        self.iface
+            .send_request_with_reply(&req)
+            .and_then(|reply| match reply.message() {
+                Message::Completion(&[byte]) => PowerValue::from_u8(byte)
+                    .ok_or(Error::new(ErrorKind::Other, "invalid power value")),
+                _ => Err(Error::new(ErrorKind::Other, "unexpected message")),
+            })
+    }
+
+    pub fn set(&mut self, value: PowerValue) -> Result<()> {
+        let req = Request::new()
+            .address(1)
+            .command()
+            .camera_1()
+            .payload(&[0x00, value as u8]);
+
+        self.iface
+            .send_request_with_reply(&req)
+            .and_then(check_empty_reply)
+    }
+}
+
+#[repr(u8)]
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+pub enum PowerValue {
+    On = 0x02,
+    Off = 0x03,
+}
+
+impl PowerValue {
+    fn from_u8(b: u8) -> Option<Self> {
+        match b {
+            0x02 => Some(PowerValue::On),
+            0x03 => Some(PowerValue::Off),
+            _ => None,
+        }
+    }
+}
+
+pub struct Zoom<'a> {
+    iface: &'a mut Interface,
+}
+
+impl<'a> Zoom<'a> {
+    pub fn new(iface: &'a mut Interface) -> Self {
+        Zoom { iface }
+    }
+
+    pub fn get(&mut self) -> Result<u16> {
+        let req = Request::new()
+            .address(1)
+            .inquiry()
+            .camera_1()
+            .payload(&[0x47]);
+
+        self.iface
+            .send_request_with_reply(&req)
+            .and_then(|reply| match reply.message() {
+                Message::Completion(payload) if payload.len() == 4 => {
+                    let mut val = (payload[0] as u16) << 12;
+                    val |= (payload[1] as u16) << 8;
+                    val |= (payload[2] as u16) << 4;
+                    val |= payload[3] as u16;
+                    Ok(val)
+                }
+                _ => Err(Error::new(ErrorKind::Other, "unexpected message")),
+            })
+    }
+
+    pub fn set(&mut self, val: u16) -> Result<()> {
+        let payload = &[
+            0x47,
+            ((val & 0xf000) >> 12) as u8,
+            ((val & 0x0f00) >> 8) as u8,
+            ((val & 0x00f0) >> 4) as u8,
+            (val & 0x000f) as u8,
+        ];
+
+        let req = Request::new()
+            .address(1)
+            .command()
+            .camera_1()
+            .payload(payload);
+
+        self.iface
+            .send_request_with_reply(&req)
+            .and_then(check_empty_reply)
     }
 }

@@ -1,19 +1,14 @@
 use std::io::Result;
 use std::path::Path;
 
+mod commands;
 mod interface;
 mod packet;
-mod pan_tilt;
-mod power;
-mod zoom;
 
+use commands::{PanTilt, Power, Zoom};
 use interface::Interface;
-use pan_tilt::PanTilt;
-use power::Power;
-use zoom::Zoom;
 
-pub use pan_tilt::PanTiltValue;
-pub use power::PowerValue;
+pub use commands::{PanTiltValue, PowerValue};
 
 pub struct Camera {
     iface: Interface,
