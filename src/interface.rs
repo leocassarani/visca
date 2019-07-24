@@ -80,8 +80,10 @@ impl Interface {
             self.rlen -= end;
 
             if self.rlen > 0 {
-                let unread = self.rbuf[end..end + self.rlen].to_vec();
-                self.rbuf[..self.rlen].copy_from_slice(&unread);
+                let mut swap = [0; 16];
+                let unread = &self.rbuf[end..end + self.rlen];
+                swap[..self.rlen].copy_from_slice(unread);
+                self.rbuf[..self.rlen].copy_from_slice(&swap[..self.rlen]);
             }
 
             packet
