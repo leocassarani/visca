@@ -15,6 +15,16 @@ impl Request {
         }
     }
 
+    pub fn from_bytes(slice: &[u8]) -> Self {
+        let len = slice.len();
+        assert!(len <= PACKET_MAX_LEN);
+
+        let mut bytes = [0; PACKET_MAX_LEN];
+        bytes[..len].copy_from_slice(slice);
+
+        Request { bytes, len }
+    }
+
     pub fn as_bytes(&self) -> &[u8] {
         &self.bytes[..self.len]
     }
