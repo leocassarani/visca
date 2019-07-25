@@ -8,10 +8,10 @@ mod commands;
 mod interface;
 mod packet;
 
-use commands::{PanTilt, Power, Presets, Zoom};
+use commands::{PanTilt, Presets, Zoom};
 use interface::Interface;
 
-pub use commands::{PanTiltValue, PowerValue};
+pub use commands::PanTiltValue;
 pub use packet::ErrorKind;
 
 #[derive(Debug)]
@@ -66,10 +66,6 @@ impl Camera {
 
     pub fn pan_tilt(&mut self) -> PanTilt {
         PanTilt::new(&mut self.iface)
-    }
-
-    pub fn power(&mut self) -> Power {
-        Power::new(&mut self.iface)
     }
 
     pub fn presets(&mut self) -> Presets {

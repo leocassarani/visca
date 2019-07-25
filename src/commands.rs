@@ -218,61 +218,6 @@ impl PanTiltValue {
     }
 }
 
-pub struct Power<'a> {
-    iface: &'a mut Interface,
-}
-
-impl<'a> Power<'a> {
-    pub fn new(iface: &'a mut Interface) -> Self {
-        Power { iface }
-    }
-
-    pub fn get(&mut self) -> Result<PowerValue> {
-        let req = Request::new()
-            .address(1)
-            .inquiry()
-            .camera_1()
-            .payload(&[0x00]);
-
-        self.iface
-            .send_request_with_reply(&req)
-            .and_then(|reply| match reply.message() {
-                Message::Completion(&[byte]) => Ok(PowerValue::from_u8(byte)),
-                _ => Err(Error::InvalidReply),
-            })
-    }
-
-    pub fn set(&mut self, value: PowerValue) -> Result<()> {
-        let req = Request::new()
-            .address(1)
-            .command()
-            .camera_1()
-            .payload(&[0x00, value as u8]);
-
-        self.iface
-            .send_request_with_reply(&req)
-            .and_then(check_empty_reply)
-    }
-}
-
-#[repr(u8)]
-#[derive(Copy, Clone, Debug, Eq, PartialEq)]
-pub enum PowerValue {
-    On = 0x02,
-    Off = 0x03,
-    Unknown,
-}
-
-impl PowerValue {
-    fn from_u8(b: u8) -> Self {
-        match b {
-            0x02 => PowerValue::On,
-            0x03 => PowerValue::Off,
-            _ => PowerValue::Unknown,
-        }
-    }
-}
-
 pub struct Presets<'a> {
     iface: &'a mut Interface,
 }
