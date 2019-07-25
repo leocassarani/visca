@@ -1,11 +1,11 @@
 use crate::interface::Interface;
 use crate::packet::{Message, Reply, Request};
-use std::io::{Error, ErrorKind, Result};
+use crate::{Error, Result};
 
 fn check_empty_reply(reply: Reply) -> Result<()> {
     match reply.message() {
         Message::Completion(&[]) => Ok(()),
-        _ => Err(Error::new(ErrorKind::Other, "expected an empty reply")),
+        _ => Err(Error::InvalidReply),
     }
 }
 
@@ -31,7 +31,7 @@ impl<'a> PanTilt<'a> {
                 Message::Completion(payload) if payload.len() == PAN_TILT_VALUE_LEN => {
                     Ok(PanTiltValue::from_bytes(payload))
                 }
-                _ => Err(Error::new(ErrorKind::Other, "unexpected message")),
+                _ => Err(Error::InvalidReply),
             })
     }
 
@@ -238,7 +238,7 @@ impl<'a> Power<'a> {
             .send_request_with_reply(&req)
             .and_then(|reply| match reply.message() {
                 Message::Completion(&[byte]) => Ok(PowerValue::from_u8(byte)),
-                _ => Err(Error::new(ErrorKind::Other, "unexpected message")),
+                _ => Err(Error::InvalidReply),
             })
     }
 
@@ -346,7 +346,7 @@ impl<'a> Zoom<'a> {
 
                     Ok(val)
                 }
-                _ => Err(Error::new(ErrorKind::Other, "unexpected message")),
+                _ => Err(Error::InvalidReply),
             })
     }
 

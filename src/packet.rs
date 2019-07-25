@@ -164,6 +164,18 @@ impl ErrorKind {
             _ => ErrorKind::Other,
         }
     }
+
+    pub fn as_str(&self) -> &'static str {
+        match *self {
+            ErrorKind::MsgLength => "invalid message length",
+            ErrorKind::Syntax => "syntax error",
+            ErrorKind::FullBuffer => "command buffer is full",
+            ErrorKind::Canceled => "command was canceled",
+            ErrorKind::NoSocket => "invalid socket number",
+            ErrorKind::NotExecutable => "could not execute command",
+            ErrorKind::Other => "other camera error",
+        }
+    }
 }
 
 #[cfg(test)]
@@ -189,7 +201,7 @@ mod tests {
     }
 
     #[test]
-    fn test_cmd_completion_message() {
+    fn test_empty_completion_message() {
         let reply = Reply::parse(&[0x90, 0x51, 0xff]);
         assert_eq!(reply.message(), Message::Completion(&[]));
     }

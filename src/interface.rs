@@ -1,6 +1,7 @@
 use crate::packet::{Message, Reply, Request};
+use crate::{Error, Result};
 use serialport::prelude::*;
-use std::io::{Error, ErrorKind, Result};
+use std::io;
 use std::path::Path;
 use std::time::Duration;
 
@@ -21,8 +22,9 @@ impl Interface {
             timeout: Duration::from_secs(1),
         };
 
-        let port = serialport::open_with_settings(path.as_ref(), &settings)?;
-        Ok(Interface::new(port))
+        serialport::open_with_settings(path.as_ref(), &settings)
+            .map(|port| Interface::new(port))
+            .map_err(|err| Error::Io(err.into()))
     }
 
     fn new(port: Box<dyn SerialPort>) -> Self {
@@ -39,16 +41,18 @@ impl Interface {
         self.recv_reply().and_then(|reply| match reply.message() {
             Message::Ack => self.recv_reply().and_then(|reply| match reply.message() {
                 Message::Completion(_) => Ok(reply),
-                Message::Error(_) => Err(Error::new(ErrorKind::Other, "got error")),
-                _ => Err(Error::new(ErrorKind::Other, "unexpected message")),
+                Message::Error(err) => Err(Error::Camera(err)),
+                _ => Err(Error::InvalidReply),
             }),
             Message::Completion(_) => Ok(reply),
-            Message::Error(_) => Err(Error::new(ErrorKind::Other, "got error")),
+            Message::Error(err) => Err(Error::Camera(err)),
         })
     }
 
     pub fn send_request(&mut self, req: &Request) -> Result<()> {
-        self.port.write_all(req.as_bytes())
+        self.port
+            .write_all(req.as_bytes())
+            .map_err(|err| err.into())
     }
 
     pub fn recv_reply(&mut self) -> Result<Reply> {
@@ -64,11 +68,11 @@ impl Interface {
                     if let Some(reply) = self.extract_reply() {
                         return Ok(reply);
                     } else if self.rbuf_full() {
-                        return Err(Error::new(ErrorKind::Other, "full buffer"));
+                        return Err(Error::ReadBufferFull);
                     }
                 }
-                Err(ref e) if e.kind() == ErrorKind::Interrupted => continue,
-                Err(err) => return Err(err),
+                Err(ref e) if e.kind() == io::ErrorKind::Interrupted => continue,
+                Err(err) => return Err(Error::Io(err)),
             }
         }
     }

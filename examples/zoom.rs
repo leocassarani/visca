@@ -1,7 +1,6 @@
-use std::io::Result;
 use std::thread;
 use std::time::{Duration, Instant};
-use visca::Camera;
+use visca::{Camera, Result};
 
 fn main() -> Result<()> {
     let mut camera = Camera::open("/dev/cu.usbserial-AM00QCCD")?;

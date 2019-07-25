@@ -1,5 +1,8 @@
-use std::io::Result;
+use std::error;
+use std::fmt;
+use std::io;
 use std::path::Path;
+use std::result;
 
 mod commands;
 mod interface;
@@ -9,6 +12,43 @@ use commands::{PanTilt, Power, Presets, Zoom};
 use interface::Interface;
 
 pub use commands::{PanTiltValue, PowerValue};
+pub use packet::ErrorKind;
+
+#[derive(Debug)]
+pub enum Error {
+    Io(io::Error),
+    Camera(ErrorKind),
+    InvalidReply,
+    ReadBufferFull,
+}
+
+impl fmt::Display for Error {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Error::Io(err) => err.fmt(f),
+            Error::Camera(kind) => write!(f, "{}", kind.as_str()),
+            Error::InvalidReply => write!(f, "invalid reply"),
+            Error::ReadBufferFull => write!(f, "read buffer is full"),
+        }
+    }
+}
+
+impl error::Error for Error {
+    fn source(&self) -> Option<&(dyn error::Error + 'static)> {
+        match self {
+            Error::Io(err) => Some(err),
+            _ => None,
+        }
+    }
+}
+
+impl From<io::Error> for Error {
+    fn from(error: io::Error) -> Self {
+        Error::Io(error)
+    }
+}
+
+pub type Result<T> = result::Result<T, Error>;
 
 pub struct Camera {
     iface: Interface,
